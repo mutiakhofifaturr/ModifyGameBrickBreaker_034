@@ -342,3 +342,111 @@ class Game(tk.Frame):
             font=("Georgia", 10, "italic"),
             fill=DARK_PINK
         )
+
+    # ==========================
+    # HUD
+    # ==========================
+
+    def create_hud(self):
+
+        self.hud = self.canvas.create_text(
+            380, 115,
+            text="",
+            font=("Georgia", 12, "bold"),
+            fill=TEXT
+        )
+
+        self.update_hud()
+
+    def update_hud(self):
+
+        self.canvas.itemconfig(
+            self.hud,
+            text=(
+                f"♡ SCORE: {self.score}     "
+                f"LEVEL: {self.level}     "
+                f"LIVES: {'♥ ' * self.lives}"
+            )
+        )
+
+    # ==========================
+    # CREATE LEVEL
+    # ==========================
+
+    def create_level(self):
+
+        self.bricks.clear()
+
+        rows = min(3 + self.level, 8)
+        columns = 8
+
+        start_x = 72.5
+        start_y = 165
+
+        hits = min(1 + (self.level - 1) // 2, 3)
+
+        for row in range(rows):
+            for col in range(columns):
+
+                x = start_x + col * 88
+                y = start_y + row * 32
+
+                brick = Brick(
+                    self.canvas,
+                    x,
+                    y,
+                    hits
+                )
+
+                self.bricks[brick.item] = brick
+
+    # ==========================
+    # ADD BALL
+    # ==========================
+
+    def add_ball(self):
+
+        if self.ball is not None:
+            self.ball.delete()
+
+        speed = 5 + (self.level - 1) * 0.8
+
+        self.ball = Ball(
+            self.canvas,
+            self.width / 2,
+            485,
+            speed
+        )
+
+    # ==========================
+    # MESSAGE
+    # ==========================
+
+    def show_message(self, title, subtitle):
+
+        self.canvas.delete("message")
+
+        self.canvas.create_rectangle(
+            180, 230,
+            580, 335,
+            fill=CREAM,
+            outline=PINK,
+            width=3,
+            tags="message"
+        )
+
+        self.canvas.create_text(
+            380, 265,
+            text=title,
+            font=("Georgia", 19, "bold"),
+            fill=TEXT,
+            tags="message"
+        )
+
+        self.canvas.create_text(
+            380, 305,
+            text=subtitle,
+            font=("Georgia", 12),
+            fill=DARK_PINK,
+            tags="message"
+        )
