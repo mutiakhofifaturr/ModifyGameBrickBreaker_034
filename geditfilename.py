@@ -468,3 +468,220 @@ class Game(tk.Frame):
 
         self.running = True
         self.game_loop()
+
+    # ==========================
+    # PARTICLE ANIMATION
+    # ==========================
+
+    def create_effect(self, x, y):
+
+        for i in range(12):
+            self.particles.append(
+                Particle(self.canvas, x, y)
+            )
+
+    def update_effects(self):
+
+        active = []
+
+        for particle in self.particles:
+            if particle.update():
+                active.append(particle)
+
+        self.particles = active
+
+    # ==========================
+    # COLLISION
+    # ==========================
+
+    def check_collisions(self):
+
+        coords = self.ball.get_position()
+
+        overlapping = self.canvas.find_overlapping(
+            *coords
+        )
+
+        # Paddle collision
+        if self.paddle.item in overlapping:
+
+            if self.ball.direction[1] > 0:
+
+                ball_center = (
+                    coords[0] + coords[2]
+                ) / 2
+
+                paddle_coords = self.paddle.get_position()
+
+                paddle_center = (
+                    paddle_coords[0] + paddle_coords[2]
+                ) / 2
+
+                offset = (
+                    ball_center - paddle_center
+                ) / (self.paddle.width / 2)
+
+                self.ball.direction[0] = offset
+                self.ball.direction[1] = -1
+
+                length = math.sqrt(
+                    self.ball.direction[0] ** 2 +
+                    self.ball.direction[1] ** 2
+                )
+
+                self.ball.direction[0] /= length
+                self.ball.direction[1] /= length
+
+        # Brick collision
+        for item in overlapping:
+
+            if item in self.bricks:
+
+                brick = self.bricks[item]
+
+                brick_coords = brick.get_position()
+
+                x = (brick_coords[0] + brick_coords[2]) / 2
+                y = (brick_coords[1] + brick_coords[3]) / 2
+
+                destroyed = brick.hit()
+
+                self.ball.direction[1] *= -1
+
+                self.score += 10
+
+                self.create_effect(x, y)
+
+                if destroyed:
+                    del self.bricks[item]
+
+                self.update_hud()
+
+                break
+
+    # ==========================
+    # GAME LOOP
+    # ==========================
+
+    def game_loop(self):
+
+        if not self.running:
+            return
+
+        self.ball.update()
+
+        self.check_collisions()
+        self.update_effects()
+
+        coords = self.ball.get_position()
+
+        # Ball falls down
+        if coords[3] >= self.height - 10:
+
+            self.running = False
+            self.lives -= 1
+
+            self.update_hud()
+
+            if self.lives <= 0:
+
+                self.show_message(
+                    "GAME OVER ♡",
+                    "Press SPACE to try again"
+                )
+
+            else:
+
+                self.add_ball()
+
+                self.show_message(
+                    "OOPS! ♡",
+                    "Press SPACE to continue"
+                )
+
+            return
+
+        # Level completed
+        if len(self.bricks) == 0:
+
+            self.running = False
+
+            self.canvas.create_text(
+                380, 210,
+                text="✿ LEVEL COMPLETE ✿",
+                font=("Georgia", 23, "bold"),
+                fill=DARK_PINK,
+                tags="message"
+            )
+
+            self.after(1300, self.next_level)
+            return
+
+        self.after(20, self.game_loop)
+
+    # ==========================
+    # NEXT LEVEL
+    # ==========================
+
+    def next_level(self):
+
+        self.level += 1
+
+        self.canvas.delete("message")
+
+        self.create_level()
+        self.add_ball()
+        self.update_hud()
+
+        self.show_message(
+            f"LEVEL {self.level} ♡",
+            "Press SPACE to continue"
+        )
+
+    # ==========================
+    # RESTART
+    # ==========================
+
+    def restart_game(self):
+
+        self.running = False
+
+        self.level = 1
+        self.score = 0
+        self.lives = 3
+
+        self.canvas.delete("brick")
+        self.canvas.delete("ball")
+        self.canvas.delete("message")
+
+        for particle in self.particles:
+            self.canvas.delete(particle.item)
+
+        self.particles.clear()
+        self.bricks.clear()
+
+        self.create_level()
+        self.add_ball()
+        self.update_hud()
+
+        self.show_message(
+            "♡ FLOWER BREAKER ♡",
+            "Press SPACE to start"
+        )
+
+
+# ==============================
+# RUN GAME
+# ==============================
+
+if __name__ == "__main__":
+
+    root = tk.Tk()
+
+    root.title("Flower Breaker - Pastel Edition")
+    root.resizable(False, False)
+    root.configure(bg=BG)
+
+    game = Game(root)
+
+    game.mainloop()
