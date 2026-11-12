@@ -450,3 +450,21 @@ class Game(tk.Frame):
             fill=DARK_PINK,
             tags="message"
         )
+
+    # ==========================
+    # START GAME
+    # ==========================
+
+    def start_game(self):
+
+        if self.running:
+            return
+
+        if self.lives <= 0:
+            self.restart_game()
+            return
+
+        self.canvas.delete("message")
+
+        self.running = True
+        self.game_loop()
